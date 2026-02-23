@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Interactief Verhaal – Houding & Oksels</title>
+<style>
+body { font-family: Arial; background:#f4f4f4; text-align:center; }
+.controls { margin: 10px; }
+svg { background:#fff; border:1px solid #ccc; }
+
+.axel { cursor:pointer; transition: fill 0.3s; }
+.arm { fill:#f2c9ac; }
+.body { fill:#f2c9ac; }
+.pillow { fill:#ddd; }
+
+.hair line { stroke:#555; stroke-width:2; }
+.oil { fill: rgba(255,255,200,0.5); }
+.instrument { fill: rgba(120,160,255,0.6); }
+</style>
+</head>
+<body>
+
+<h2>Interactief Verhaal – Houding & Oksels</h2>
+
+<div class="controls">
+Houding:
+<select id="pose">
+  <option value="down">Armen omlaag</option>
+  <option value="up">Armen omhoog</option>
+  <option value="pillow">Armen omhoog + kussen</option>
+</select>
+
+Geschoren:
+<select id="hair">
+  <option value="no">Nee</option>
+  <option value="yes">Ja</option>
+</select>
+
+Olie:
+<select id="oil">
+  <option value="off">Uit</option>
+  <option value="on">Aan</option>
+</select>
+
+Instrument:
+<select id="tool">
+  <option value="soft">Zacht</option>
+  <option value="medium">Medium</option>
+  <option value="strong">Sterk</option>
+</select>
+</div>
+
+<p id="story">Kies een houding en klik op een oksel.</p>
+
+<svg id="scene" width="320" height="420" viewBox="0 0 320 420">
+
+<!-- kussen -->
+<rect id="pillow" class="pillow" x="70" y="40" width="180" height="40" rx="20" visibility="hidden"/>
+
+<!-- lichaam -->
+<rect x="120" y="90" width="80" height="220" rx="40" class="body"/>
+
+<!-- armen -->
+<rect id="armL" class="arm" x="80" y="110" width="40" height="140" rx="20"/>
+<rect id="armR" class="arm" x="200" y="110" width="40" height="140" rx="20"/>
+
+<!-- oksels -->
+<ellipse id="leftAx" class="axel" cx="105" cy="140" rx="22" ry="18" fill="#e0b090"/>
+<ellipse id="rightAx" class="axel" cx="215" cy="140" rx="22" ry="18" fill="#e0b090"/>
+
+<!-- haar -->
+<g id="hairLeft" class="hair"></g>
+<g id="hairRight" class="hair"></g>
+
+<!-- olie -->
+<ellipse id="oilLeft" class="oil" cx="105" cy="140" rx="20" ry="16" visibility="hidden"/>
+<ellipse id="oilRight" class="oil" cx="215" cy="140" rx="20" ry="16" visibility="hidden"/>
+
+<!-- instrument -->
+<circle id="toolLeft" class="instrument" cx="105" cy="140" r="12" visibility="hidden"/>
+<circle id="toolRight" class="instrument" cx="215" cy="140" r="12" visibility="hidden"/>
+
+</svg>
+
+<script>
+const story = document.getElementById("story");
+
+/* 🔊 geluid (geen bestanden nodig) */
+function playSound(strength){
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = strength==="soft"?600:strength==="medium"?900:1200;
+  gain.gain.value = 0.1;
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  setTimeout(()=>osc.stop(), 200);
+}
+
+/* ✋ houding */
+function updatePose(){
+  const pose = document.getElementById("pose").value;
+  const armL = document.getElementById("armL");
+  const armR = document.getElementById("armR");
+  const pillow = document.getElementById("pillow");
+
+  if(pose==="down"){
+    armL.setAttribute("y",110);
+    armR.setAttribute("y",110);
+    pillow.setAttribute("visibility","hidden");
+  }
+  if(pose==="up"){
+    armL.setAttribute("y",40);
+    armR.setAttribute("y",40);
+    pillow.setAttribute("visibility","hidden");
+  }
+  if(pose==="pillow"){
+    armL.setAttribute("y",40);
+    armR.setAttribute("y",40);
+    pillow.setAttribute("visibility","visible");
+  }
+}
+
+/* 🌱 haar */
+function updateHair(){
+  ["Left","Right"].forEach(s=>{
+    const g = document.getElementById("hair"+s);
+    g.innerHTML="";
+    if(document.getElementById("hair").value==="no"){
+      for(let i=0;i<6;i++){
+        const l = document.createElementNS("http://www.w3.org/2000/svg","line");
+        l.setAttribute("x1", s==="Left"?95:225);
+        l.setAttribute("y1", 135+i*3);
+        l.setAttribute("x2", s==="Left"?80:240);
+        l.setAttribute("y2", 130+i*3);
+        g.appendChild(l);
+      }
+    }
+  });
+}
+
+/* ✨ olie */
+function updateOil(){
+  const on = document.getElementById("oil").value==="on";
+  oilLeft.setAttribute("visibility",on?"visible":"hidden");
+  oilRight.setAttribute("visibility",on?"visible":"hidden");
+}
+
+/* 🤭 kietel */
+function tickle(side){
+  const tool = document.getElementById("tool").value;
+  const el = document.getElementById("tool"+side);
+  el.setAttribute("visibility","visible");
+  playSound(tool);
+
+  story.textContent =
+    tool==="soft"?"Een lichte tinteling.":
+    tool==="medium"?"Duidelijke reactie!":
+    "Heftige reactie, nauwelijks stil te houden!";
+
+  setTimeout(()=>el.setAttribute("visibility","hidden"),400);
+}
+
+leftAx.onclick=()=>tickle("Left");
+rightAx.onclick=()=>tickle("Right");
+
+pose.onchange=updatePose;
+hair.onchange=updateHair;
+oil.onchange=updateOil;
+
+updatePose();
+updateHair();
+</script>
+
+</body>
+</html>
